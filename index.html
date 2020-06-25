@@ -71,6 +71,33 @@
         width: 100%;
         margin-bottom: 10px;
       }
+
+	#queryDiv {
+		min-width: 250px;
+		font-size: 14px;
+		padding: 10px;
+		display: none;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+	.geometry-options {
+	display: flex;
+	flex-direction: row;
+	}
+
+	.geometry-button {
+		flex: 1;
+		border-style: solid;
+		border-width: 1px;
+		border-image: none;
+	}
+
+	.geometry-button-selected {
+		background: #4c4c4c;
+		color: #fff;
+	}
+
     </style>
 
     <script>
@@ -99,7 +126,6 @@
     promiseUtils) {
         var webscene_id = prompt("Please enter your webscene id");
 
-        //allez les bleus
         var info = new OAuthInfo({
           // Swap this ID out with a registered application ID
           appId: "PgVvZNHefms6xLZR",
@@ -133,15 +159,12 @@
           }
         });
 
-        // add a GraphicsLayer for the sketches and the buffer
+        // add a GraphicsLayer for the sketches
         const sketchLayer = new GraphicsLayer();
-        const bufferLayer = new GraphicsLayer();
         var objectIdsSelected = [];
         var definitionExpression_test = "";
-        //view.map.addMany([bufferLayer, sketchLayer]);
         let sceneLayer = null;
         let sceneLayerView = null;
-        let bufferSize = 0;
 
 
         var bdgLayer = null;
@@ -167,8 +190,7 @@
       }
     });
 
-      view.ui.add([queryDiv], "bottom-left");
-    //view.ui.add([resultDiv], "top-right");
+      view.ui.add([queryDiv], "bottom-right");
     // use SketchViewModel to draw polygons that are used as a query
     let sketchGeometry = null;
 
@@ -210,31 +232,12 @@
 
     function geometryButtonsClickHandler(event) {
       const geometryType = event.target.value;
-      // Each time we click to draw a new geometry, we clear the old one
-      //clearGeometry();
       // Create geometry
       sketchViewModel.create(geometryType);
     }
 
-    const bufferNumSlider = new Slider({
-      container: "bufferNum",
-      min: 0,
-      max: 500,
-      steps: 1,
-      labelsVisible: true,
-      precision: 0,
-      labelFormatFunction: function(value, type) {
-        return value.toString() + "m";
-      },
-      values: [0]
-    });
-    // get user entered values for buffer
-    bufferNumSlider.on("value-change", bufferVariablesChanged);
-    function bufferVariablesChanged(event) {
-      bufferSize = event.value;
-      runQuery();
-    }
-
+   
+   
     // Button "Clear" : Clear the geometry and set the default renderer
     document
       .getElementById("clearGeometry")
@@ -245,11 +248,8 @@
       sketchGeometry = null;
       sketchViewModel.cancel();
       sketchLayer.removeAll();
-      bufferLayer.removeAll();
-      clearHighlighting();
       selectByDefinitionExpression(objectIdsSelected);
-      //clearCharts();
-      //resultDiv.style.display = "none";
+
     }
 
     // Set the geometry query on the visible SceneLayerView
@@ -257,12 +257,9 @@
       if (!sketchGeometry) {
         return;
       }
-      //resultDiv.style.display = "block";
-      // Update buffer
-      updateBufferGraphic(bufferSize);
+      
       return promiseUtils.eachAlways([
         // Now we have displayed the geometry, we can make the statistics
-        //queryStatistics(),
         updateSceneLayer()
       ]);
     });
@@ -278,59 +275,7 @@
     }
 
 
-// Set the renderer with objectIds
-    var highlightHandle = null;
 
-    // Remove the highlighting
-    function clearHighlighting() {
-      if (highlightHandle) {
-        highlightHandle.remove();
-        highlightHandle = null;
-      }
-    }
-
-    // Highlight selected features
-    function highlightBuildings(objectIds) {
-      // Remove any previous highlighting
-      clearHighlighting();
-      const objectIdField = sceneLayer.objectIdField;
-      // Display the length of objectIds: the number of selected features
-      document.getElementById("count").innerHTML = objectIds.length;
-      // Highlight all features in objectIds
-      highlightHandle = sceneLayerView.highlight(objectIds);
-    }
-
-
-    var bufferGeometry = 0;
-    // update the graphic with buffer
-    function updateBufferGraphic(buffer) {
-      // add a polygon graphic for the buffer
-      // if buffer size > 0
-      if (buffer > 0) {
-        var bufferGeometry = geometryEngine.geodesicBuffer(
-          sketchGeometry,
-          buffer, // buffer size
-          "meters"
-        );
-        // if there is not already a buffer, we create one
-        if (bufferLayer.graphics.length === 0) {
-          bufferLayer.add(
-            new Graphic({
-              geometry: bufferGeometry,
-              symbol: sketchViewModel.polygonSymbol
-            })
-          );
-        } 
-        // if there is already a buffer, we modify it
-        else {
-          bufferLayer.graphics.getItemAt(0).geometry = bufferGeometry;
-        }
-      } 
-      // if the user select "0" for the buffer size, we remove the previous one
-      else {
-        bufferLayer.removeAll();
-      }
-    }
     function selectByDefinitionExpression(objectIDs){
       console.log(objectIDs);
       objectIdsSelected = objectIdsSelected.concat(objectIDs);
@@ -356,8 +301,7 @@
     function updateSceneLayer() {
       const query = sceneLayerView.createQuery();
       query.geometry = sketchGeometry;
-      query.distance = bufferSize;
-      return sceneLayerView.queryObjectIds(query).then(selectByDefinitionExpression,highlightBuildings);
+      return sceneLayerView.queryObjectIds(query).then(selectByDefinitionExpression);
     }        
 
         
@@ -473,13 +417,7 @@
         ></button>
       </div>
       <br />
-      <!-- Buffer div -->
-      <div class="tooltip">
-        <label for="bufferNum">Selectie buffer:</label>
-        <div id="bufferNum"></div>
-      </div>
-      <br />
-      <button class="esri-button" id="clearGeometry" type="button">
+        <button class="esri-button" id="clearGeometry" type="button">
         Opnieuw
       </button>
     </div>
