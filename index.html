@@ -439,10 +439,11 @@
           var title = sidebar.getElementsByTagName("input")[0];
           var save = sidebar.getElementsByTagName("input")[1];
           var overwrite = sidebar.getElementsByTagName("input")[2];
-
+          console.log(overwrite.value);
 
           title.value = "My New WebScene";
           save.disabled = false;
+          overwrite.disabled = false;
 
           var overlay = document.getElementById("overlayDiv");
           var ok = overlay.getElementsByTagName("input")[0];
@@ -458,6 +459,7 @@
           });
 
           save.addEventListener("click", function() {
+          	console.log("save");
             // item automatically casts to a PortalItem instance by saveAs
             var item = {
               title: title.value
