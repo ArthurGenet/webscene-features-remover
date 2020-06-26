@@ -438,6 +438,8 @@
           var sidebar = document.getElementById("sidebarDiv");
           var title = sidebar.getElementsByTagName("input")[0];
           var save = sidebar.getElementsByTagName("input")[1];
+          var overwrite = sidebar.getElementsByTagName("input")[2];
+
 
           title.value = "My New WebScene";
           save.disabled = false;
@@ -488,6 +490,26 @@
                 statusMessage("Save Webscene", "<br> Error " + error);
               });
           });
+
+
+          overwrite.addEventListener("click", function() {
+            // item automatically casts to a PortalItem instance by saveAs
+            var item = {
+              title: title.value
+            };
+
+            // Update properties of the WebScene related to the view. This should be called just before saving a scene.
+            scene.updateFrom(view);
+
+            scene
+              .save()
+              // Saved successfully
+              
+              // Save didn't work correctly
+              .catch(function(error) {
+                statusMessage("Save Webscene", "<br> Error " + error);
+              });
+          });
         });
 
       });
@@ -501,6 +523,8 @@
         <div style="padding-bottom: 10px">Title:</div>
         <input id="websceneTitle" class="esri-input" type="text" />
         <input type="button" class="esri-button" value="Save" disabled />
+        <input type="button" class="esri-button" value="Overwrite" disabled />
+
       </div>
     </div>
     <div id="overlayDiv">
