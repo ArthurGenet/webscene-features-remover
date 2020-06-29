@@ -116,14 +116,16 @@
   "esri/geometry/geometryEngine",
   "esri/Graphic",
   "esri/widgets/Search",
-  "esri/core/promiseUtils"
+  "esri/core/promiseUtils",
+  "esri/layers/support/BuildingFilter"
       ], function(OAuthInfo, esriId, SceneView, Editor, WebScene,SceneLayer,Query,QueryTask,GraphicsLayer,
     SketchViewModel,
     Slider,
     geometryEngine,
     Graphic,
     Search,
-    promiseUtils) {
+    promiseUtils,
+    BuildingFilter) {
         var webscene_id = prompt("Please enter your webscene id");
 
         var info = new OAuthInfo({
@@ -164,8 +166,8 @@
         var objectIdsSelected = [];
         var definitionExpression_test = "";
         let sceneLayer = null;
-        let sceneLayerView_array = [];
-        let featureLayerView_array = [];
+        let layerView_array = [];
+        let buildingLayerView_array = [];
         var layer_array = [];
         var layer_checked = [];
         let index = 0
@@ -174,7 +176,8 @@
 
         view.when(function () {
         scene.allLayers.forEach(layer => {
-          	if (layer.type === "feature" || layer.type === "scene") {
+        	console.log(layer.type);
+          	if (layer.type === "feature" || layer.type === "scene" || layer.type === "building-scene") {
 	            //sceneLayer = layer;
 	            objectIdsSelected.push([]);
 	            layer_array.push(layer);
@@ -186,17 +189,34 @@
 			        layers_checkbox_div.appendChild(newcontent.firstChild);
 			    }
 			    console.log(layer_checked);
+			    bg_ind = index;
+			    console.log(layer_array[index]);
 			    document
 		          .getElementById(index)
 		          .addEventListener("change", checkbox_clicked(index));
-		        if (layer_array[index].type === "feature"){
+		        if (layer_array[index].type === "building-scene"){
 	            	view.whenLayerView(layer_array[index]).then(function(layerView) {
-	            		featureLayerView_array.push(layerView);	
+	            		buildingLayerView_array.push(layerView);
+	            		console.log("d'acccord");	
+	            		    const buildingFilter = new BuildingFilter({
+							  filterBlocks: [{
+							    // an SQL expression that filters using the BldgLevel field
+							    filterExpression: "OBJECTID_1 = 11"
+							  }]
+							});
+							var bg =layer_array[bg_ind];
+							console.log(layer_array[bg_ind]);
+							// set the filter in the filters array on the layer
+							layer_array[bg_ind].filters = [buildingFilter];
+							// specify which filter is the one that should be applied
+							layer_array[bg_ind].activeFilterId = buildingFilter.id;
 	            	})
+	            	console.log("d'acccord");
 	            }
 	            else{
 	            	view.whenLayerView(layer_array[index]).then(function(layerView) {
-	            		sceneLayerView_array.push(layerView);
+	            		console.log(layer_array[index]);
+	            		layerView_array.push(layerView);
 	            	})
 	            }
 	            queryDiv.style.display = "block";
@@ -303,7 +323,7 @@
             return;
         }
 	  
-	    for (let i = 0; i<sceneLayerView_array.length; i+=1){
+	    for (let i = 0; i<layerView_array.length; i+=1){
 
       	    if (layer_checked[i] == true){
       	    	index_layer = i;
@@ -325,16 +345,16 @@
 	    	}
   		}	
 
-  		for (let i = sceneLayerView_array.length; i<layer_array.length; i+=1){
+  		for (let i = layerView_array.length; i<layer_array.length; i+=1){
 
   			if (layer_checked[i] == true){
-  				console.log(i+sceneLayerView_array.length);
+  				console.log(i+layerView_array.length);
   				index_layer = i;
   				index_feature = null;
 				//return promiseUtils.eachAlways([
 		        // Now we have displayed the geometry, we can make the statistics
-		        for (let j = 0; j < featureLayerView_array.length; j+=1){
-	  				if (layer_array[i].title==featureLayerView_array[j].layer.title){
+		        for (let j = 0; j < buildingLayerView_array.length; j+=1){
+	  				if (layer_array[i].title==buildingLayerView_array[j].layer.title){
 	  					
 	  					index_feature = j;
 	  					break;
@@ -371,9 +391,8 @@
 
 
     function selectByDefinitionExpression(objectIDs,index_selection,objectIDsField){
-    	
-    		
-
+    		  
+    		  
     		  console.log(objectIDs);
     		  console.log(index_selection);
     		  console.log(objectIdsSelected);
@@ -396,6 +415,7 @@
 			      console.log(definitionExpression);
 			     
 			      console.log(layer_array[index_selection].title);
+
 			      layer_array[index_selection].definitionExpression = definitionExpression;
 		      }
 		      
@@ -405,16 +425,21 @@
     }
 
 
+
+
     function  updateSceneLayer(index_scene, index_layer, callback){
-    	const query = sceneLayerView_array[index_scene].createQuery();
+console.log(layer_array[index_layer].title);
+	  					console.log(layerView_array[index_scene].layer.title);    	
+	  					const query = layerView_array[index_scene].createQuery();
 		query.geometry = sketchGeometry;
-        sceneLayerView_array[index_scene].queryObjectIds(query).then(function(results){
-        	callback(results,index_scene, layer_array[index_layer].objectIdField);
+        layerView_array[index_scene].queryObjectIds(query).then(function(results){
+        	console.log(layer_array[index_layer].title);
+        	callback(results,index_layer, layer_array[index_layer].objectIdField);
         });
     }    
 
     function updateFeatureLayer(index_feature,index_layer,callback){
-    	const query = featureLayerView_array[index_feature].createQuery();
+    	const query = buildingLayerView_array[index_feature].createQuery();
 	    query.geometry = sketchGeometry;
         featureLayerView_array[index_feature].queryObjectIds(query).then(function(results){
         	callback(results,index_layer, layer_array[index_layer].objectIdField);

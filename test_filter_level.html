@@ -1,0 +1,238 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <!--
+  ArcGIS API for JavaScript, https://js.arcgis.com
+  For more information about the building-scene-layer-filter sample, read the original sample description at developers.arcgis.com.
+  https://developers.arcgis.com/javascript/latest/sample-code/building-scene-layer-filter/index.html
+  -->
+<title>Filter BuildingSceneLayer - 4.15</title>
+
+    <link
+      href="https://js.arcgis.com/4.15/esri/themes/light/main.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://js.arcgis.com/4.15/"></script>
+
+    <script>
+      require([
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/layers/BuildingSceneLayer",
+        "esri/layers/support/BuildingFilter",
+        "esri/widgets/Slider",
+        "esri/widgets/LayerList"
+      ], function(
+        WebScene,
+        SceneView,
+        BuildingSceneLayer,
+        BuildingFilter,
+        Slider,
+        LayerList
+      ) {
+        // Load webscene and display it in a SceneView
+        const webscene = new WebScene({
+          portalItem: {
+            id: "2f645be7906b49c691888b5e5ca756a8"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene,
+          qualityProfile: "high"
+        });
+
+        // define constants and global variables
+        const levelFieldName = "BldgLevel";
+        // wire-frame mode renders the building using edges
+        // so it requires to set the edge style
+        const wireFrameMode = {
+          type: "wire-frame",
+          edges: {
+            type: "solid",
+            color: [105, 142, 179, 1]
+          }
+        };
+        const xRayMode = {
+          type: "x-ray"
+        };
+        let activeFilterMode = xRayMode;
+        let activeFloorValue = null;
+        let buildingLayer = null;
+
+        view
+          .when(function() {
+            // get the BuildingSceneLayer from the webscene
+            webscene.allLayers.forEach(function(layer) {
+              if (layer.title === "Administration building, Redlands") {
+                buildingLayer = layer;
+              }
+            });
+
+            // get statistics about building levels to get initial level filter value
+            // and create the level slider
+            buildingLayer.when(function() {
+              buildingLayer.summaryStatistics.load().then(function() {
+                const fieldStatistics = buildingLayer.summaryStatistics.fields;
+                let i = 0;
+                let levelStats = null;
+                while (!levelStats) {
+                  if (fieldStatistics[i].fieldName === levelFieldName) {
+                    levelStats = fieldStatistics[i];
+                    // initially use the middle level to filter the building
+                    activeFloorValue = Math.round(levelStats.max / 2);
+                    // set initial filter
+                    setFloorBuildingFilter();
+                    // generate a slider to filter levels based on the statistics
+                    createFloorSlider(levelStats);
+                  }
+                  i++;
+                }
+              });
+            });
+          })
+          .catch(console.error);
+
+        function createFloorSlider(levelStatistics) {
+          // generate level slider based on statistics
+          const levelSlider = new Slider({
+            container: "levelSelector",
+            min: levelStatistics.min,
+            max: levelStatistics.max,
+            precision: 0,
+            layout: "vertical",
+            steps: 1,
+            tickConfigs: [
+              {
+                mode: "position",
+                values: levelStatistics.mostFrequentValues,
+                labelsVisible: true
+              }
+            ],
+            values: [activeFloorValue]
+          });
+
+          // when the user changes the value, a new filter is generated
+          levelSlider.watch("values", function(values) {
+            activeFloorValue = values[0];
+            setFloorBuildingFilter();
+          });
+        }
+
+        function setFloorBuildingFilter() {
+          const buildingFilter = new BuildingFilter({
+            filterBlocks: [
+              // the first filter block displays the active level with original textures
+              // using `solid` filter mode
+              {
+                filterExpression:
+                  levelFieldName + " = " + activeFloorValue.toString(),
+                filterMode: {
+                  type: "solid"
+                }
+              },
+              // the second filter block displays the levels below the active level faded out
+              // using `x-ray` filter mode
+              {
+                filterExpression:
+                  levelFieldName + " < " + activeFloorValue.toString(),
+                filterMode: activeFilterMode
+              }
+            ]
+          });
+          // set the filter in the filters array on the layer
+          buildingLayer.filters = [buildingFilter];
+          // specify which filter is the one that should be applied
+          buildingLayer.activeFilterId = buildingFilter.id;
+        }
+
+        // reset the filter by setting the activeFilterId to null
+        document
+          .getElementById("filterReset")
+          .addEventListener("click", function() {
+            buildingLayer.activeFilterId = null;
+          });
+
+        // allow the user to select between x-ray and wire-frame for the levels below
+        // the active level
+        document.getElementsByName("filter-mode").forEach(function(elem) {
+          elem.addEventListener("click", function(event) {
+            if (event.target.value === "wire-frame") {
+              activeFilterMode = wireFrameMode;
+            } else {
+              activeFilterMode = xRayMode;
+            }
+            setFloorBuildingFilter();
+          });
+        });
+
+        // Add a layer list widget
+        const layerList = new LayerList({
+          view: view
+        });
+
+        view.ui.add(layerList, "bottom-left");
+        view.ui.add("menu", "top-right");
+      });
+    </script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #menu {
+        max-width: 250px;
+        padding: 0.8em;
+      }
+
+      #levelSelector {
+        height: 100px;
+        margin: 1em 0 1em -40px;
+        background: transparent;
+      }
+
+      .mode {
+        padding: 5px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="viewDiv" class="esri-widget"></div>
+    <div id="menu" class="esri-widget">
+      <p>Filter by level:</p>
+      <div id="levelSelector"></div>
+      Select a mode to display the building features below the selected level:
+      <div class="mode">
+        <input
+          type="radio"
+          name="filter-mode"
+          id="x-ray"
+          value="x-ray"
+          checked
+        />
+        <label for="x-ray">x-ray</label>
+        <input
+          type="radio"
+          name="filter-mode"
+          id="wire-frame"
+          value="wire-frame"
+        />
+        <label for="wire-frame">wire-frame</label>
+      </div>
+      <button id="filterReset" class="esri-button">Reset filter</button>
+    </div>
+  </body>
+</html>
+
