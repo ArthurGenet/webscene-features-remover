@@ -198,19 +198,8 @@
 	            	view.whenLayerView(layer_array[index]).then(function(layerView) {
 	            		buildingLayerView_array.push(layerView);
 	            		console.log("d'acccord");	
-	            		    const buildingFilter = new BuildingFilter({
-							  filterBlocks: [{
-							    // an SQL expression that filters using the BldgLevel field
-							    filterExpression: "OBJECTID_1 = 11"
-							  }]
-							});
-							var bg =layer_array[bg_ind];
-							console.log(layer_array[bg_ind]);
-							// set the filter in the filters array on the layer
-							layer_array[bg_ind].filters = [buildingFilter];
-							// specify which filter is the one that should be applied
-							layer_array[bg_ind].activeFilterId = buildingFilter.id;
-	            	})
+					layer[bg_ind].definitionExpression = "OBJECTID_1 = 11"; 
+							  
 	            	console.log("d'acccord");
 	            }
 	            else{
