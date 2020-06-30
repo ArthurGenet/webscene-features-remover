@@ -125,7 +125,7 @@
     Search,
     promiseUtils
     ) {
-        //var webscene_id = prompt("Please enter your webscene id");
+        var webscene_id = prompt("Please enter your webscene id");
 
         var info = new OAuthInfo({
           // Swap this ID out with a registered application ID
@@ -149,7 +149,7 @@
         var scene = new WebScene({
           portalItem: {
             // autocasts as new PortalItem()
-            id: "eb2cf6712ffc492aae54bb1958917d79"
+            id: webscene_id
           }
         });
          var view = new SceneView({
@@ -422,11 +422,17 @@
 			      		
 			      		for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
 					        if (i == 0){
-					        	definitionExpression += "(" + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
-					        	if(objectIdsSelected[index_selection].length == 1){
-					        		definitionExpression += "(";
+					        	if (objectIdsSelected[index_selection].length > 1){
+									definitionExpression += "(" + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
 					        	}
+					        	else{
+					        		definitionExpression += objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
+					        	}
+					        	
+					        	
+
 					        }
+
 					        else{
 					        	definitionExpression += "OR " + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
 					        	if (i == objectIdsSelected[index_selection].length-1){
