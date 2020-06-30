@@ -101,32 +101,31 @@
     </style>
 
     <script>
-      require([
-        "esri/identity/OAuthInfo",
-        "esri/identity/IdentityManager",
-        "esri/views/SceneView",
-        "esri/widgets/Editor",
-        "esri/WebScene",
-        "esri/layers/SceneLayer",
-        "esri/tasks/support/Query",
-        "esri/tasks/QueryTask",
-        "esri/layers/GraphicsLayer",
-  "esri/widgets/Sketch/SketchViewModel",
-  "esri/widgets/Slider",
-  "esri/geometry/geometryEngine",
-  "esri/Graphic",
-  "esri/widgets/Search",
-  "esri/core/promiseUtils",
-  "esri/layers/support/BuildingFilter"
+        require([
+	        "esri/identity/OAuthInfo",
+	        "esri/identity/IdentityManager",
+	        "esri/views/SceneView",
+	        "esri/widgets/Editor",
+	        "esri/WebScene",
+	        "esri/layers/SceneLayer",
+	        "esri/tasks/support/Query",
+	        "esri/tasks/QueryTask",
+	        "esri/layers/GraphicsLayer",
+		  	"esri/widgets/Sketch/SketchViewModel",
+			"esri/widgets/Slider",
+		    "esri/geometry/geometryEngine",
+	    	"esri/Graphic",
+			"esri/widgets/Search",
+			"esri/core/promiseUtils"
       ], function(OAuthInfo, esriId, SceneView, Editor, WebScene,SceneLayer,Query,QueryTask,GraphicsLayer,
     SketchViewModel,
     Slider,
     geometryEngine,
     Graphic,
     Search,
-    promiseUtils,
-    BuildingFilter) {
-        var webscene_id = prompt("Please enter your webscene id");
+    promiseUtils
+    ) {
+        //var webscene_id = prompt("Please enter your webscene id");
 
         var info = new OAuthInfo({
           // Swap this ID out with a registered application ID
@@ -150,7 +149,7 @@
         var scene = new WebScene({
           portalItem: {
             // autocasts as new PortalItem()
-            id: webscene_id
+            id: "eb2cf6712ffc492aae54bb1958917d79"
           }
         });
          var view = new SceneView({
@@ -167,47 +166,43 @@
         var definitionExpression_test = "";
         let sceneLayer = null;
         let layerView_array = [];
-        let buildingLayerView_array = [];
         var layer_array = [];
+        var definitionExpression_map = new Map();
         var layer_checked = [];
         let index = 0
         var attribute = "";
         var id = "FID";
 
+
         view.when(function () {
         scene.allLayers.forEach(layer => {
         	console.log(layer.type);
-          	if (layer.type === "feature" || layer.type === "scene" || layer.type === "building-scene") {
+          	if (layer.type === "feature" || layer.type === "scene") {
 	            //sceneLayer = layer;
 	            objectIdsSelected.push([]);
 	            layer_array.push(layer);
+	            definitionExpression_map.set(layer.title, layer.definitionExpression);
 	            var layers_checkbox_div = document.getElementById("layers_checkbox");
 	            layer_checked.push(true);
 	            var newcontent = document.createElement('div');
-	    		newcontent.innerHTML = "<input id="+ index +" type='checkbox' checked />"+ layer_array[index].title +"<br />";
+	            var layer_title_checkbox = layer.title;
+	            if (layer_title_checkbox.length > 70){
+	            	layer_title_checkbox = layer_title_checkbox.substring(0,66)+"...";
+	            }
+	    		newcontent.innerHTML = "<input id="+ index +" type='checkbox' checked />"+ layer_title_checkbox +"<br />";
 			    while (newcontent.firstChild) {
 			        layers_checkbox_div.appendChild(newcontent.firstChild);
 			    }
-			    console.log(layer_checked);
-			    bg_ind = index;
-			    console.log(layer_array[index]);
+			    
 			    document
 		          .getElementById(index)
 		          .addEventListener("change", checkbox_clicked(index));
-		        if (layer_array[index].type === "building-scene"){
-	            	view.whenLayerView(layer_array[index]).then(function(layerView) {
-	            		buildingLayerView_array.push(layerView);
-	            		console.log("d'acccord");	
-					layer[bg_ind].definitionExpression = "OBJECTID_1 = 11"; 
-							  
-	            	console.log("d'acccord");
-	            }
-	            else{
+
 	            	view.whenLayerView(layer_array[index]).then(function(layerView) {
 	            		console.log(layer_array[index]);
 	            		layerView_array.push(layerView);
 	            	})
-	            }
+	            
 	            queryDiv.style.display = "block";
 
 	            
@@ -249,7 +244,7 @@
       defaultUpdateOptions: {
         tool: "reshape",
         toggleToolOnClick: false
-        },
+        },defaultCreateOptions: { hasZ: false },
       view: view
     });
 
@@ -293,18 +288,23 @@
       .addEventListener("click", clearGeometry);
     // Clear the geometry and set the default renderer
     function clearGeometry() {
-      objectIdsSelected=[];
+	    objectIdsSelected=[];
 
-      for (let i =0; i < layer_array.length; i+=1){
-      	objectIdsSelected.push([]);
-      }
-      sketchGeometry = null;
-      sketchViewModel.cancel();
-      sketchLayer.removeAll();
-      for (let i = 0; i< layer_array.length; i+=1){
-      	layer_array[i].definitionExpression = "1=1";
-      }
-    }
+	    for (let i =0; i < layer_array.length; i+=1){
+	      	objectIdsSelected.push([]);
+	    }
+	    sketchGeometry = null;
+	    sketchViewModel.cancel();
+	    sketchLayer.removeAll();
+	    for (let i = 0; i< layer_array.length; i+=1){
+	      	for (var [key, value] of definitionExpression_map) {
+	      	//layer_array[i].definitionExpression = null;
+	      		if(String(layer_array[i].title) == key){
+	      			layer_array[i].definitionExpression = value;	      			
+	      		}
+	        }
+	    }
+	}
 
     // Set the geometry query on the visible SceneLayerView
     var debouncedRunQuery = promiseUtils.debounce(function() {
@@ -318,10 +318,10 @@
       	    	index_layer = i;
   				var index_scene = null;
 		        // Now we have displayed the geometry, we can make the statistics
-		        for (let j = 0; j < sceneLayerView_array.length; j+=1){
-	  				if (layer_array[i].title == sceneLayerView_array[j].layer.title){
+		        for (let j = 0; j < layerView_array.length; j+=1){
+	  				if (layer_array[i].title == layerView_array[j].layer.title){
 	  					console.log(layer_array[i].title);
-	  					console.log(sceneLayerView_array[j].layer.title);
+	  					console.log(layerView_array[j].layer.title);
 	  					index_scene = j;
 	  					break;
 	  				}
@@ -334,28 +334,9 @@
 	    	}
   		}	
 
-  		for (let i = layerView_array.length; i<layer_array.length; i+=1){
+  		
 
-  			if (layer_checked[i] == true){
-  				console.log(i+layerView_array.length);
-  				index_layer = i;
-  				index_feature = null;
-				//return promiseUtils.eachAlways([
-		        // Now we have displayed the geometry, we can make the statistics
-		        for (let j = 0; j < buildingLayerView_array.length; j+=1){
-	  				if (layer_array[i].title==buildingLayerView_array[j].layer.title){
-	  					
-	  					index_feature = j;
-	  					break;
-	  				}
-  				
-  				}
-  				
-  				
-		        updateFeatureLayer(index_feature, index_layer,selectByDefinitionExpression)
-		       	
-		    }
-  		}
+  	
 
 
     });
@@ -386,27 +367,86 @@
     		  console.log(index_selection);
     		  console.log(objectIdsSelected);
     		  console.log(objectIdsSelected[index_selection].concat(objectIDs));
-		      objectIdsSelected[index_selection] = objectIdsSelected[index_selection].concat(objectIDs);
 		      console.log(objectIdsSelected);
-		      if (objectIDs.length == 0){
-		        return;
-		      }
-		      else{
-		      	definitionExpression = "";
-			      for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
-			        if (i == 0){
-			          definitionExpression += objectIDsField+" <> " + objectIdsSelected[index_selection][0]+" ";
-			        }
-			        else{
-			          definitionExpression += "AND "+objectIDsField+" <> " + objectIdsSelected[index_selection][i] + " ";
-			        }
-			      }
+		      	
+
+		      	var definitionExpression = "";
+				
+
+		      	if(selectedFilter == "inside"){	
+		      		if (objectIDs.length == 0){
+			        	return;
+			    	}	
+			    	var test_objectIds = true;
+			    	console.log(objectIdsSelected[index_selection]);
+			    	if (objectIdsSelected[index_selection].length == 0){
+			    		test_objectIds = false;
+			    	}
+			      	objectIdsSelected[index_selection] = objectIdsSelected[index_selection].concat(objectIDs);
+ 	
+			      	if (test_objectIds == false && layer_array[index_selection].definitionExpression == null){
+						for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
+					        if (i == 0){
+					          definitionExpression += objectIDsField+" <> " + objectIdsSelected[index_selection][0]+" ";
+					        }
+					        else{
+					          definitionExpression += "AND "+objectIDsField+" <> " + objectIdsSelected[index_selection][i] + " ";
+					        }
+				        }
+				        layer_array[index_selection].definitionExpression = definitionExpression;
+			      	}
+
+				    else{
+
+				    	for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
+					        
+					        definitionExpression += "AND "+objectIDsField+" <> " + objectIdsSelected[index_selection][i] + " ";
+					        
+				        }
+				        console.log(layer_array[index_selection].definitionExpression.concat(definitionExpression));
+				        layer_array[index_selection].definitionExpression = layer_array[index_selection].definitionExpression.concat(definitionExpression);
+
+			    	}
+				}
+
+				else{
+						if (objectIDs.length == 0){
+							definitionExpression = "0=1";
+
+						}
+
+
+
+						objectIdsSelected[index_selection] = [];
+						objectIdsSelected[index_selection] = objectIDs;
+			      		
+			      		for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
+					        if (i == 0){
+					        	definitionExpression += "(" + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
+					        	if(objectIdsSelected[index_selection].length == 1){
+					        		definitionExpression += "(";
+					        	}
+					        }
+					        else{
+					        	definitionExpression += "OR " + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
+					        	if (i == objectIdsSelected[index_selection].length-1){
+					        		definitionExpression += ")";
+					        	}
+					        }
+					        
+					        
+				        }
+						layer_array[index_selection].definitionExpression = definitionExpression;
+						objectIdsSelected[index_selection] = [];
+			      	
+				}
+
 			      console.log(definitionExpression);
 			     
 			      console.log(layer_array[index_selection].title);
 
-			      layer_array[index_selection].definitionExpression = definitionExpression;
-		      }
+			      
+		      
 		      
     		
 		      
@@ -417,24 +457,21 @@
 
 
     function  updateSceneLayer(index_scene, index_layer, callback){
-console.log(layer_array[index_layer].title);
-	  					console.log(layerView_array[index_scene].layer.title);    	
-	  					const query = layerView_array[index_scene].createQuery();
+	  	const query = layerView_array[index_scene].createQuery();
 		query.geometry = sketchGeometry;
         layerView_array[index_scene].queryObjectIds(query).then(function(results){
-        	console.log(layer_array[index_layer].title);
         	callback(results,index_layer, layer_array[index_layer].objectIdField);
         });
     }    
 
-    function updateFeatureLayer(index_feature,index_layer,callback){
-    	const query = buildingLayerView_array[index_feature].createQuery();
-	    query.geometry = sketchGeometry;
-        featureLayerView_array[index_feature].queryObjectIds(query).then(function(results){
-        	callback(results,index_layer, layer_array[index_layer].objectIdField);
-        });
-    }  
-
+  
+    let selectedFilter = "inside";
+        document
+          .getElementById("relationship-select")
+          .addEventListener("change", function(event) {
+            var select = event.target;
+            selectedFilter = select.options[select.selectedIndex].value;
+          });
         
 
                     
@@ -537,10 +574,12 @@ console.log(layer_array[index_layer].title);
   <body>
     <div id="sidebarDiv" class="esri-widget">
       <div style="padding: 10px">
-        <h3>Save Webscene</h3>
+        <h3>Save Webscene</h3> <br />
+        <h4>New Webscene</h4>
         <div style="padding-bottom: 10px">Title:</div>
         <input id="websceneTitle" class="esri-input" type="text" />
-        <input type="button" class="esri-button" value="Save" disabled />
+        <input type="button" class="esri-button" value="Save" disabled /> <br />
+        <h4>Overwrite the Webscene</h4> 
         <input type="button" class="esri-button" value="Overwrite" disabled />
 
       </div>
@@ -552,9 +591,16 @@ console.log(layer_array[index_layer].title);
     <div id="viewDiv"></div>
     <!-- Query by geometry div -->
     <div id="queryDiv" class="esri-widget">
-      <b>Interactieve selectie</b><br />
+      <b>Interactieve selectie</b><br /><br />
+      Layers to modify: 
       <div id="layers_checkbox"></div>
-      <br />Teken om te selecteren:
+      <br />
+      <label for="relationship-select">Remove the :</label>
+      <select id="relationship-select" class="options">
+        <option value="inside">inside</option>
+        <option value="outside">outside</option>
+      </select> 
+      <br /> <br />Teken om te selecteren:
       <!-- Type of geometry query div -->
       <div class="geometry-options">
         <button
