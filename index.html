@@ -554,10 +554,7 @@
           overwrite.addEventListener("click", function() {
           	console.log("overwrite");
 
-            // item automatically casts to a PortalItem instance by saveAs
-            var item = {
-              title: title.value
-            };
+            
 
             // Update properties of the WebScene related to the view. This should be called just before saving a scene.
             scene.updateFrom(view);
