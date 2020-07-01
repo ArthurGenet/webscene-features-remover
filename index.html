@@ -6,7 +6,7 @@
 	name="viewport"
 	content="initial-scale=1,maximum-scale=1,user-scalable=no"
 	/>
-	<title>Hide WebScene Features</title>
+	<title>Verberg Webscene Features</title>
 
 	<link
 	rel="stylesheet"
@@ -24,14 +24,14 @@
 <body>
 	<div id="sidebarDiv" class="esri-widget">
 		<div style="padding: 10px">
-			<h3>Save Webscene</h3> <br />
-			<h4>New Webscene</h4>
-			<div style="padding-bottom: 10px">Title:</div>
+			<h3>Opslaan Webscene</h3> <br />
+			<h4>Nieuwe Webscene</h4>
+			<div style="padding-bottom: 10px">Titel:</div>
 			<input id="websceneTitle" class="esri-input" type="text" />
-			<input type="button" class="esri-button" value="Save" disabled /> <br />
-			<h4>Overwrite the Webscene</h4> 
-			<input type="button" class="esri-button" value="Overwrite" disabled />
-			<input type="button" id = "upload-button" class="esri-button"  value="Upload a new Webscene" />
+			<input type="button" class="esri-button" value="Opslaan" disabled /> <br />
+			<h4>Webscene overschrijven</h4> 
+			<input type="button" class="esri-button" value="Overschrijven" disabled />
+			<input type="button" id = "upload-button" class="esri-button"  value="Upload een nieuwe Webscene" />
 
 		</div>
 	</div>
@@ -43,13 +43,13 @@
 	<!-- Query by geometry div -->
 	<div id="queryDiv" class="esri-widget">
 		<b>Interactieve selectie</b><br /><br />
-		Layers to modify: 
+		Lagen om te wijzigen: 
 		<div id="layers_checkbox"></div>
 		<br />
-		<label for="relationship-select">Remove the :</label>
+		<label for="relationship-select">Verwijder de:</label>
 		<select id="relationship-select" class="options">
-			<option value="inside">inside</option>
-			<option value="outside">outside</option>
+			<option value="inside">buitenkant</option>
+			<option value="outside">binnenkant</option>
 		</select> 
 		<br /> <br />Teken om te selecteren:
 		<!-- Type of geometry query div -->

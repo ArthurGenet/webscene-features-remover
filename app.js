@@ -32,7 +32,7 @@ require([
     promiseUtils
     ) {
     
-      var webscene_id = prompt("Please enter your webscene id");
+      var webscene_id = prompt("Voer uw webscene id in");
 
       // Authentification information: allows us to connect to ArcGIS Online
       // Create a new Application in ArcGIS Online and linked it to your website
@@ -354,7 +354,7 @@ require([
       var save = sidebar.getElementsByTagName("input")[1];
       var overwrite = sidebar.getElementsByTagName("input")[2];
 
-      title.value = "My New WebScene";
+      title.value = "Mijn Nieuwe Webscene";
       // Enable the buttons
       save.disabled = false; 
       overwrite.disabled = false;
@@ -392,13 +392,13 @@ require([
 
             statusMessage(
               "Save Webscene",
-              "<br> Successfully saved as <i>" + link + "</i>"
+              "<br> Succesvol opgeslagen als <i>" + link + "</i>"
               );
           })
               
           // Save didn't work correctly
           .catch(function(error) {
-            statusMessage("Save Webscene", "<br> Error " + error);
+            statusMessage("Opslaan Webscene", "<br> Error " + error);
           });
         });
 
@@ -416,15 +416,15 @@ require([
             var link = '<a target="_blank" href="' + itemPageUrl + '">' + item.title + "</a>";
 
             statusMessage(
-              "Save Webscene",
-              "<br> Successfully saved as <i>" + link + "</i>"
+              "Opslaan Webscene",
+              "<br> Succesvol opgeslagen als <i>" + link + "</i>"
             );
           })
           // Saved successfully
               
           // Save didn't work correctly
           .catch(function(error) {
-            statusMessage("Save Webscene", "<br> Error " + error);
+            statusMessage("Opslaan Webscene", "<br> Error " + error);
           });
       });
     });
