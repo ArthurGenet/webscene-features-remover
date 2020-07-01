@@ -1,650 +1,88 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <title>Save a web scene - 4.15</title>
-
-    <link
-      rel="stylesheet"
-      href="https://js.arcgis.com/4.15/esri/themes/light/main.css"
-    />
-    <script src="https://js.arcgis.com/4.15/"></script>
-
-    <style>
-      html,
-      body {
-        padding: 0;
-        margin: 0 !important;
-        height: 100%;
-        width: 100%;
-      }
-
-      #sidebarDiv {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 300px;
-      }
-
-      #overlayDiv {
-        z-index: 1;
-        position: absolute;
-        margin: auto auto;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        width: 400px;
-        height: 160px;
-        padding: 10px;
-        background-color: white;
-        border: 1px solid grey;
-        visibility: hidden;
-      }
-
-      #viewDiv {
-        position: absolute;
-        right: 0;
-        left: 300px;
-        top: 0;
-        bottom: 0;
-      }
-
-      .head,
-      .info {
-        margin: 0 auto;
-        width: 100%;
-        padding: 20px;
-      }
-
-      .info {
-        font-size: 75%;
-        font-weight: 200;
-      }
-
-      #websceneTitle {
-        width: 100%;
-        margin-bottom: 10px;
-      }
-
-	#queryDiv {
-		min-width: 250px;
-		font-size: 14px;
-		padding: 10px;
-		display: none;
-		overflow-y: auto;
-		overflow-x: hidden;
-	}
-
-	.geometry-options {
-	display: flex;
-	flex-direction: row;
-	}
-
-	.geometry-button {
-		flex: 1;
-		border-style: solid;
-		border-width: 1px;
-		border-image: none;
-	}
-
-	.geometry-button-selected {
-		background: #4c4c4c;
-		color: #fff;
-	}
-
-    </style>
-
-    <script>
-        require([
-	        "esri/identity/OAuthInfo",
-	        "esri/identity/IdentityManager",
-	        "esri/views/SceneView",
-	        "esri/widgets/Editor",
-	        "esri/WebScene",
-	        "esri/layers/SceneLayer",
-	        "esri/tasks/support/Query",
-	        "esri/tasks/QueryTask",
-	        "esri/layers/GraphicsLayer",
-		  	"esri/widgets/Sketch/SketchViewModel",
-			"esri/widgets/Slider",
-		    "esri/geometry/geometryEngine",
-	    	"esri/Graphic",
-			"esri/widgets/Search",
-			"esri/core/promiseUtils"
-      ], function(OAuthInfo, esriId, SceneView, Editor, WebScene,SceneLayer,Query,QueryTask,GraphicsLayer,
-    SketchViewModel,
-    Slider,
-    geometryEngine,
-    Graphic,
-    Search,
-    promiseUtils
-    ) {
-        var webscene_id = prompt("Please enter your webscene id");
-
-        var info = new OAuthInfo({
-          // Swap this ID out with a registered application ID
-          appId: "PgVvZNHefms6xLZR",
-          // Uncomment the next line and update if using your own portal
-          // portalUrl: "https://<host>:<port>/arcgis"
-          // Uncomment the next line to prevent the user's signed in state from being shared with other apps on the same domain with the same authNamespace value.
-          // authNamespace: "portal_oauth_inline",
-          popup: true
-        });
-        esriId.registerOAuthInfos([info]);
-
-        /************************************************************
-         * Creates a new WebScene instance. A WebScene can reference
-         * a PortalItem ID that represents a WebScene saved to
-         * arcgis.com or an on-premise portal.
-         *
-         * To load a WebScene from an on-premise portal, set the portal
-         * url with esriConfig.portalUrl (see above).
-         ************************************************************/
-        var scene = new WebScene({
-          portalItem: {
-            // autocasts as new PortalItem()
-            id: webscene_id
-          }
-        });
-         var view = new SceneView({
-          map: scene,
-          container: "viewDiv",
-          padding: {
-            top: 40
-          }
-        });
-
-        // add a GraphicsLayer for the sketches
-        const sketchLayer = new GraphicsLayer();
-        var objectIdsSelected = [];
-        var definitionExpression_test = "";
-        let sceneLayer = null;
-        let layerView_array = [];
-        var layer_array = [];
-        var definitionExpression_map = new Map();
-        var layer_checked = [];
-        let index = 0
-        var attribute = "";
-        var id = "FID";
-
-
-        view.when(function () {
-        scene.allLayers.forEach(layer => {
-        	console.log(layer.type);
-          	if (layer.type === "feature" || layer.type === "scene") {
-	            //sceneLayer = layer;
-	            objectIdsSelected.push([]);
-	            layer_array.push(layer);
-	            definitionExpression_map.set(layer.title, layer.definitionExpression);
-	            var layers_checkbox_div = document.getElementById("layers_checkbox");
-	            layer_checked.push(true);
-	            var newcontent = document.createElement('div');
-	            var layer_title_checkbox = layer.title;
-	            if (layer_title_checkbox.length > 70){
-	            	layer_title_checkbox = layer_title_checkbox.substring(0,66)+"...";
-	            }
-	    		newcontent.innerHTML = "<input id="+ index +" type='checkbox' checked />"+ layer_title_checkbox +"<br />";
-			    while (newcontent.firstChild) {
-			        layers_checkbox_div.appendChild(newcontent.firstChild);
-			    }
-			    
-			    document
-		          .getElementById(index)
-		          .addEventListener("change", checkbox_clicked(index));
-
-	            	view.whenLayerView(layer_array[index]).then(function(layerView) {
-	            		console.log(layer_array[index]);
-	            		layerView_array.push(layerView);
-	            	})
-	            
-	            queryDiv.style.display = "block";
-
-	            
-	        index+=1;
-         	}
-        
-        })
-      });
-
-      function checkbox_clicked(index) 
-			{
-
-			return function() {
-
-
-			    if (layer_checked[index] == true){
-		        	layer_checked[index] = false;
-			        }
-			    else{
-	            	layer_checked[index] = true;
-			        }
-			    console.log("ok");
-			   	console.log(layer_checked);
-
-	            }
-        	}
-      view.watch("updating", function(updating) {
-      // wait for the Scene view to finish updating
-      if (!updating) { 
-      }
-    });
-
-      view.ui.add([queryDiv], "bottom-right");
-    // use SketchViewModel to draw polygons that are used as a query
-    let sketchGeometry = null;
-
-    const sketchViewModel = new SketchViewModel({
-      layer: sketchLayer,
-      defaultUpdateOptions: {
-        tool: "reshape",
-        toggleToolOnClick: false
-        },defaultCreateOptions: { hasZ: false },
-      view: view
-    });
-
-    // When a graphic is drawn for the first time
-    sketchViewModel.on("create", function(event) {
-      if (event.state === "complete") {
-        sketchGeometry = event.graphic.geometry;
-        runQuery();
-      }
-    });
-
-    // When we draw another graphic
-    sketchViewModel.on("update", function(event) {
-      if (event.state !== "cancel" && event.graphics.length) {
-        sketchGeometry = event.graphics[0].geometry;
-      }
-    });
-
-    // draw geometry buttons - use the selected geometry to sketch
-    document
-      .getElementById("point-geometry-button")
-      .addEventListener("click", geometryButtonsClickHandler);
-    document
-      .getElementById("line-geometry-button")
-      .addEventListener("click", geometryButtonsClickHandler);
-    document
-      .getElementById("polygon-geometry-button")
-      .addEventListener("click", geometryButtonsClickHandler);
-
-    function geometryButtonsClickHandler(event) {
-      const geometryType = event.target.value;
-      // Create geometry
-      sketchViewModel.create(geometryType);
-    }
-
-   
-   
-    // Button "Clear" : Clear the geometry and set the default renderer
-    document
-      .getElementById("clearGeometry")
-      .addEventListener("click", clearGeometry);
-    // Clear the geometry and set the default renderer
-    function clearGeometry() {
-	    objectIdsSelected=[];
-
-	    for (let i =0; i < layer_array.length; i+=1){
-	      	objectIdsSelected.push([]);
-	    }
-	    sketchGeometry = null;
-	    sketchViewModel.cancel();
-	    sketchLayer.removeAll();
-	    for (let i = 0; i< layer_array.length; i+=1){
-	      	for (var [key, value] of definitionExpression_map) {
-	      	//layer_array[i].definitionExpression = null;
-	      		if(String(layer_array[i].title) == key){
-	      			layer_array[i].definitionExpression = value;	      			
-	      		}
-	        }
-	    }
-	}
-
-    // Set the geometry query on the visible SceneLayerView
-    var debouncedRunQuery = promiseUtils.debounce(function() {
-        if (!sketchGeometry) {
-            return;
-        }
-	  
-	    for (let i = 0; i<layerView_array.length; i+=1){
-
-      	    if (layer_checked[i] == true){
-      	    	index_layer = i;
-  				var index_scene = null;
-		        // Now we have displayed the geometry, we can make the statistics
-		        for (let j = 0; j < layerView_array.length; j+=1){
-	  				if (layer_array[i].title == layerView_array[j].layer.title){
-	  					console.log(layer_array[i].title);
-	  					console.log(layerView_array[j].layer.title);
-	  					index_scene = j;
-	  					break;
-	  				}
-  				
-  				}
-		        // Now we have displayed the geometry, we can make the statistics
-		        
-		        	updateSceneLayer(index_scene,index_layer,selectByDefinitionExpression)
-		       	
-	    	}
-  		}	
-
-  		
-
-  	
-
-
-    });
-
-    function runQuery() {
-    	 
-
-      debouncedRunQuery().catch((error) => {
-        // If the request is aborted
-        if (error.name === "AbortError") {
-          return;
-        }
-      console.error(error);
-      });
-    }
-
-
-
-
-
-
-
-
-    function selectByDefinitionExpression(objectIDs,index_selection,objectIDsField){
-    		  
-    		  
-    		  console.log(objectIDs);
-    		  console.log(index_selection);
-    		  console.log(objectIdsSelected);
-    		  console.log(objectIdsSelected[index_selection].concat(objectIDs));
-		      console.log(objectIdsSelected);
-		      	
-
-		      	var definitionExpression = "";
-				
-
-		      	if(selectedFilter == "inside"){	
-		      		if (objectIDs.length == 0){
-			        	return;
-			    	}	
-			    	var test_objectIds = true;
-			    	console.log(objectIdsSelected[index_selection]);
-			    	if (objectIdsSelected[index_selection].length == 0){
-			    		test_objectIds = false;
-			    	}
-			      	objectIdsSelected[index_selection] = objectIdsSelected[index_selection].concat(objectIDs);
- 	
-			      	if (test_objectIds == false && layer_array[index_selection].definitionExpression == null){
-						for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
-					        if (i == 0){
-					          definitionExpression += objectIDsField+" <> " + objectIdsSelected[index_selection][0]+" ";
-					        }
-					        else{
-					          definitionExpression += "AND "+objectIDsField+" <> " + objectIdsSelected[index_selection][i] + " ";
-					        }
-				        }
-				        layer_array[index_selection].definitionExpression = definitionExpression;
-			      	}
-
-				    else{
-
-				    	for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
-					        
-					        definitionExpression += "AND "+objectIDsField+" <> " + objectIdsSelected[index_selection][i] + " ";
-					        
-				        }
-				        console.log(layer_array[index_selection].definitionExpression.concat(definitionExpression));
-				        layer_array[index_selection].definitionExpression = layer_array[index_selection].definitionExpression.concat(definitionExpression);
-
-			    	}
-				}
-
-				else{
-						if (objectIDs.length == 0){
-							definitionExpression = "0=1";
-
-						}
-
-
-
-						objectIdsSelected[index_selection] = [];
-						objectIdsSelected[index_selection] = objectIDs;
-			      		
-			      		for (let i = 0; i<objectIdsSelected[index_selection].length; i+=1){
-					        if (i == 0){
-					        	if (objectIdsSelected[index_selection].length > 1){
-									definitionExpression += "(" + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
-					        	}
-					        	else{
-					        		definitionExpression += objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
-					        	}
-					        	
-					        	
-
-					        }
-
-					        else{
-					        	definitionExpression += "OR " + objectIDsField + " = " + objectIdsSelected[index_selection][i] + " ";
-					        	if (i == objectIdsSelected[index_selection].length-1){
-					        		definitionExpression += ")";
-					        	}
-					        }
-					        
-					        
-				        }
-						layer_array[index_selection].definitionExpression = definitionExpression;
-						objectIdsSelected[index_selection] = [];
-			      	
-				}
-
-			      console.log(definitionExpression);
-			     
-			      console.log(layer_array[index_selection].title);
-
-			      
-		      
-		      
-    		
-		      
-      	
-    }
-
-
-
-
-    function  updateSceneLayer(index_scene, index_layer, callback){
-	  	const query = layerView_array[index_scene].createQuery();
-		query.geometry = sketchGeometry;
-        layerView_array[index_scene].queryObjectIds(query).then(function(results){
-        	callback(results,index_layer, layer_array[index_layer].objectIdField);
-        });
-    }    
-
-  
-    let selectedFilter = "inside";
-        document
-          .getElementById("relationship-select")
-          .addEventListener("change", function(event) {
-            var select = event.target;
-            selectedFilter = select.options[select.selectedIndex].value;
-          });
-        
-
-                    
-
-
-        /************************************************************
-         * Set the WebScene instance to the map property in a
-         * SceneView.
-         ************************************************************/
-
-
-        view.when(function() {
-          // when the scene and view resolve, display the scene's
-          // new title in the Div
-          var sidebar = document.getElementById("sidebarDiv");
-          var title = sidebar.getElementsByTagName("input")[0];
-          var save = sidebar.getElementsByTagName("input")[1];
-          var overwrite = sidebar.getElementsByTagName("input")[2];
-          console.log(overwrite.value);
-
-          title.value = "My New WebScene";
-          save.disabled = false;
-          overwrite.disabled = false;
-
-          var overlay = document.getElementById("overlayDiv");
-          var ok = overlay.getElementsByTagName("input")[0];
-
-          function statusMessage(head, info) {
-            overlay.getElementsByClassName("head")[0].innerHTML = head;
-            overlay.getElementsByClassName("info")[0].innerHTML = info;
-            overlay.style.visibility = "visible";
-          }
-
-          ok.addEventListener("click", function() {
-            overlay.style.visibility = "hidden";
-          });
-
-          save.addEventListener("click", function() {
-          	console.log("save");
-            // item automatically casts to a PortalItem instance by saveAs
-            var item = {
-              title: title.value
-            };
-
-            // Update properties of the WebScene related to the view. This should be called just before saving a scene.
-            scene.updateFrom(view);
-
-            scene
-              .saveAs(item)
-              // Saved successfully
-              .then(function(item) {
-                // link to the newly-created web scene item
-                var itemPageUrl =
-                  item.portal.url + "/home/item.html?id=" + item.id;
-                var link =
-                  '<a target="_blank" href="' +
-                  itemPageUrl +
-                  '">' +
-                  title.value +
-                  "</a>";
-
-                statusMessage(
-                  "Save Webscene",
-                  "<br> Successfully saved as <i>" + link + "</i>"
-                );
-              })
-              // Save didn't work correctly
-              .catch(function(error) {
-                statusMessage("Save Webscene", "<br> Error " + error);
-              });
-          });
-
-
-          overwrite.addEventListener("click", function() {
-          	console.log("overwrite");
-
-            
-
-            // Update properties of the WebScene related to the view. This should be called just before saving a scene.
-            scene.updateFrom(view);
-
-            scene
-              .save()
-              .then(function(item) {
-                // link to the newly-created web scene item
-                var itemPageUrl =
-                  item.portal.url + "/home/item.html?id=" + item.id;
-                var link =
-                  '<a target="_blank" href="' +
-                  itemPageUrl +
-                  '">' +
-                  item.title +
-                  "</a>";
-
-                statusMessage(
-                  "Save Webscene",
-                  "<br> Successfully saved as <i>" + link + "</i>"
-                );
-              })
-              // Saved successfully
-              
-              // Save didn't work correctly
-              .catch(function(error) {
-                statusMessage("Save Webscene", "<br> Error " + error);
-              });
-          });
-        });
-
-      });
-    </script>
-  </head>
-
-  <body>
-    <div id="sidebarDiv" class="esri-widget">
-      <div style="padding: 10px">
-        <h3>Save Webscene</h3> <br />
-        <h4>New Webscene</h4>
-        <div style="padding-bottom: 10px">Title:</div>
-        <input id="websceneTitle" class="esri-input" type="text" />
-        <input type="button" class="esri-button" value="Save" disabled /> <br />
-        <h4>Overwrite the Webscene</h4> 
-        <input type="button" class="esri-button" value="Overwrite" disabled />
-
-      </div>
-    </div>
-    <div id="overlayDiv">
-      <label class="head"></label> <label class="info"></label>
-      <input type="button" value="Ok" />
-    </div>
-    <div id="viewDiv"></div>
-    <!-- Query by geometry div -->
-    <div id="queryDiv" class="esri-widget">
-      <b>Interactieve selectie</b><br /><br />
-      Layers to modify: 
-      <div id="layers_checkbox"></div>
-      <br />
-      <label for="relationship-select">Remove the :</label>
-      <select id="relationship-select" class="options">
-        <option value="inside">inside</option>
-        <option value="outside">outside</option>
-      </select> 
-      <br /> <br />Teken om te selecteren:
-      <!-- Type of geometry query div -->
-      <div class="geometry-options">
-        <button
-          class="esri-widget--button esri-icon-map-pin geometry-button"
-          id="point-geometry-button"
-          value="point"
-          title="Selecteer op basis van een punt"
-        ></button>
-        <button
-          class="esri-widget--button esri-icon-polyline geometry-button"
-          id="line-geometry-button"
-          value="polyline"
-          title="Selecteer op basis van een lijn"
-        ></button>
-        <button
-          class="esri-widget--button esri-icon-polygon geometry-button"
-          id="polygon-geometry-button"
-          value="polygon"
-          title="Selecteer op basis van een vlak"
-        ></button>
-      </div>
-      <br />
-        <button class="esri-button" id="clearGeometry" type="button">
-        Opnieuw
-      </button>
-    </div>
-  </body>
+<head>
+	<meta charset="utf-8" />
+	<meta
+	name="viewport"
+	content="initial-scale=1,maximum-scale=1,user-scalable=no"
+	/>
+	<title>Hide WebScene Features</title>
+
+	<link
+	rel="stylesheet"
+	href="https://js.arcgis.com/4.15/esri/themes/light/main.css"
+	/>
+	<script src="https://js.arcgis.com/4.15/"></script>
+
+	<!--CSS Stylesheet-->
+	<link rel="stylesheet" href="style.css">
+	<!--JS script-->
+	<script src=app.js></script>
+
+</head>
+
+<body>
+	<div id="sidebarDiv" class="esri-widget">
+		<div style="padding: 10px">
+			<h3>Save Webscene</h3> <br />
+			<h4>New Webscene</h4>
+			<div style="padding-bottom: 10px">Title:</div>
+			<input id="websceneTitle" class="esri-input" type="text" />
+			<input type="button" class="esri-button" value="Save" disabled /> <br />
+			<h4>Overwrite the Webscene</h4> 
+			<input type="button" class="esri-button" value="Overwrite" disabled />
+			<input type="button" id = "upload-button" class="esri-button"  value="Upload a new Webscene" />
+
+		</div>
+	</div>
+	<div id="overlayDiv">
+		<label class="head"></label> <label class="info"></label>
+		<input type="button" value="Ok" />
+	</div>
+	<div id="viewDiv"></div>
+	<!-- Query by geometry div -->
+	<div id="queryDiv" class="esri-widget">
+		<b>Interactieve selectie</b><br /><br />
+		Layers to modify: 
+		<div id="layers_checkbox"></div>
+		<br />
+		<label for="relationship-select">Remove the :</label>
+		<select id="relationship-select" class="options">
+			<option value="inside">inside</option>
+			<option value="outside">outside</option>
+		</select> 
+		<br /> <br />Teken om te selecteren:
+		<!-- Type of geometry query div -->
+		<div class="geometry-options">
+			<button
+			class="esri-widget--button esri-icon-map-pin geometry-button"
+			id="point-geometry-button"
+			value="point"
+			title="Selecteer op basis van een punt"
+			></button>
+			<button
+			class="esri-widget--button esri-icon-polyline geometry-button"
+			id="line-geometry-button"
+			value="polyline"
+			title="Selecteer op basis van een lijn"
+			></button>
+			<button
+			class="esri-widget--button esri-icon-polygon geometry-button"
+			id="polygon-geometry-button"
+			value="polygon"
+			title="Selecteer op basis van een vlak"
+			></button>
+		</div>
+		<br />
+		<button class="esri-button" id="clearGeometry" type="button">
+			Opnieuw
+		</button>
+	</div>
+
+
+</body>
 </html>
+
+
+
+
