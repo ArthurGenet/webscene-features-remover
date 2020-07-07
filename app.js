@@ -391,7 +391,7 @@ require([
             var link = '<a target="_blank" href="' + itemPageUrl + '">' + title.value + "</a>";
 
             statusMessage(
-              "Save Webscene",
+              "Opslaan Webscene",
               "<br> Succesvol opgeslagen als <i>" + link + "</i>"
               );
           })
