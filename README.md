@@ -12,5 +12,5 @@ The Web App is avalaible online with this link:
 3. Draw your sketch
 4. Repeat these steps as many time as you want
 5. If you have made a mistake, you can come back to the start by clicking "Opnieuw"
-6. Once you have finish you can save your work as another layer ("Opslaan") or overwright an existing layer ("Overschrijven")
+6. Once you have finish you can save your work as another layer ("Opslaan") or overwright an existing layer ("Overschrijven"). If you create a new WebScene, it will become the displaying scene in the Web App.
 7. Click on "Selecteer een nieuwe Webscene" to change the current WebScene
