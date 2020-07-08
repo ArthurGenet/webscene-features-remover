@@ -3,7 +3,7 @@ This project availables users of ArcGIS to quickly and easily hide features from
 This Web App modifies the definitionExpression attribute of the SceneLayers and FeatureLayers from the WebScene. This attribute applies a filter on the layer it is associated with.
 
 ## Usage
-The Web App is avalaible online with this link: 
+The Web App is avalaible online with this link: [link](https://arthurgenet.github.io/webscene-features-remover/ "WebScene Features Remover")
 1. Enter your WebScene id (you need the rights to modify it)
 2. Choose your parameters (bottom-right): 
 - check which layer you want to modify
