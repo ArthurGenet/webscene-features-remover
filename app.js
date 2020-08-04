@@ -32,7 +32,7 @@ require([
     promiseUtils
     ) {
     
-      var webscene_id = prompt("Voer uw webscene id in");
+      var webscene_id = prompt("Voer uw webscene id in (eg: abd5e3c4b173417f8c14f1283dee33c6)");
 
       // Authentification information: allows us to connect to ArcGIS Online
       // Create a new Application in ArcGIS Online and linked it to your website
